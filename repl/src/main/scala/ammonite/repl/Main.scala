@@ -4,7 +4,7 @@ import java.io.File
 
 import ammonite.ops._
 
-import scala.annotation.compileTimeOnly
+import scala.reflect.internal.annotations.compileTimeOnly
 import scala.reflect.runtime.universe.TypeTag
 
 /**
