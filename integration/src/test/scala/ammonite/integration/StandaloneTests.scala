@@ -11,7 +11,9 @@ import utest.framework.TestSuite
  * standalone executable has a pretty different classloading environment
  * from the "run in SBT on raw class files" that the rest of the tests use.
  *
- * Need to call sbt repl/assembly beforehand to make these pass
+ * These are also the only tests that cover all the argument-parsing
+ * and configuration logic inside, which the unit tests don't cover since
+ * they call the REPL programmatically
  */
 object StandaloneTests extends TestSuite{
   // Prepare standalone executable
