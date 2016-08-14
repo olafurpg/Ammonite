@@ -1,4 +1,5 @@
 import scalatex.ScalatexReadme
+
 import sbtassembly.AssemblyPlugin.defaultShellScript
 
 
@@ -113,6 +114,7 @@ lazy val terminal = project
  */
 lazy val amm = project
   .dependsOn(terminal, ops)
+  .settings(packSettings)
   .settings(
     macroSettings,
     sharedSettings,
@@ -121,6 +123,7 @@ lazy val amm = project
     name := "ammonite",
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      "com.martiansoftware" % "nailgun-server" % "0.9.1",
       "jline" % "jline" % "2.12",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.apache.ivy" % "ivy" % "2.4.0",
@@ -135,6 +138,10 @@ lazy val amm = project
       else Seq("com.chuusai" %% "shapeless" % "2.1.0" % "test")
     ),
     javaOptions += "-Xmx4G",
+    packMain := Map(
+      "amm" -> "ammonite.Main",
+      "amm_ng" -> "com.martiansoftware.nailgun.NGServer"
+    ),
     assemblyOption in assembly := (assemblyOption in assembly).value.copy(
       prependShellScript = Some(
         // G1 Garbage Collector is awesome https://github.com/lihaoyi/Ammonite/issues/216

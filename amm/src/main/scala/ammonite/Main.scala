@@ -10,6 +10,7 @@ import ammonite.main.Router.{ArgSig, EntryPoint}
 import ammonite.util.Name.backtickWrap
 import ammonite.util._
 import ammonite.util.Util.newLine
+import com.martiansoftware.nailgun.NGContext
 
 
 
@@ -96,7 +97,23 @@ object Main{
     * The command-line entry point, which does all the argument parsing before
     * delegating to [[Main.run]]
     */
-  def main(args0: Array[String]) = {
+  def nailMain(nGContext: NGContext): Unit = {
+    runMain(
+      nGContext.getArgs,
+      Main(
+       wd = Path(nGContext.getWorkingDirectory),
+        outputStream = nGContext.out,
+        inputStream = nGContext.in,
+        errorStream = nGContext.err
+      )
+    )
+  }
+
+  def main(args0: Array[String]): Unit = {
+    runMain(args0, Main())
+  }
+
+  def runMain(args0: Array[String], init: Main) = {
     var fileToExecute: Option[Path] = None
     var codeToExecute: Option[String] = None
     var ammoniteHome: Option[Path] = None
@@ -118,7 +135,7 @@ object Main{
       // the `Main` configuration arguments
       arg[String]("<file-args>...")
         .optional()
-        .foreach{ x => fileToExecute = Some(Path(x, cwd)) }
+        .foreach{ x => fileToExecute = Some(Path(x, init.wd)) }
         .text("The Ammonite script file you want to execute")
       opt[String]('c', "code")
         .foreach(x => codeToExecute = Some(x))
@@ -135,10 +152,10 @@ object Main{
         .text("Any arguments you want to pass to the Ammonite script file")
       opt[File]('h', "home")
         .valueName("<file>")
-        .foreach( x => ammoniteHome = Some(Path(x, cwd)))
+        .foreach( x => ammoniteHome = Some(Path(x, init.wd)))
         .text("The home directory of the REPL; where it looks for config and caches")
       opt[String]('f', "predef-file")
-        .foreach(x => predefFile = Some(Path(x, cwd)))
+        .foreach(x => predefFile = Some(Path(x, init.wd)))
         .text("Lets you load your predef from a custom location")
       opt[Unit]('y', "continually")
         .foreach(x => continually = true)
@@ -172,7 +189,7 @@ object Main{
       if (b) while(true) f
       else f
     }
-    for(c <- replParser.parse(before, Main())) ifContinually(continually){
+    for(c <- replParser.parse(before, init)) ifContinually(continually){
       val preTiming = System.nanoTime()
 
       {
@@ -185,7 +202,10 @@ object Main{
               new Storage.Folder(ammoniteHome.getOrElse(Defaults.ammoniteHome)) {
                 override val predef = pf
               }
-          }
+          },
+          inputStream = c.inputStream,
+          outputStream = c.outputStream,
+          errorStream = c.errorStream
         )
         (fileToExecute, codeToExecute) match {
           case (None, None) => println("Loading..."); main.run()
